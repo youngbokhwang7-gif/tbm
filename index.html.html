@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="안전점검회의록">
+<meta name="theme-color" content="#0f1b2d">
+<link rel="apple-touch-icon" href="https://img.icons8.com/fluent/512/safety-collection.png">
+<title>안전점검 회의록 (TBM)</title>
+<style>
+  :root{
+    --navy:#0f1b2d; --navy2:#16243a; --line:#2a3a52;
+    --amber:#f5a623; --amber-d:#d98e10;
+    --ink:#1a2330; --paper:#ffffff; --soft:#f4f6f9;
+    --txt:#1d2733; --mut:#6b7686; --bd:#d6dde6;
+    --ok:#1f9d55; --warn:#e23b3b;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+    background:var(--soft);color:var(--txt);font-size:15px;line-height:1.5}
+  .wrap{max-width:760px;margin:0 auto;padding:0 0 90px}
+
+  /* header */
+  header{background:var(--navy);color:#fff;padding:14px 16px;position:sticky;top:0;z-index:30;
+    padding-top:calc(14px + env(safe-area-inset-top));
+    display:flex;align-items:center;gap:10px;box-shadow:0 2px 10px rgba(0,0,0,.18)}
+  header .badge{background:var(--amber);color:#1a1300;font-weight:800;border-radius:7px;
+    padding:5px 9px;font-size:13px;letter-spacing:.5px}
+  header h1{font-size:16px;margin:0;font-weight:700;flex:1}
+  header .sub{font-size:11px;color:#9fb0c6;font-weight:400}
+
+  /* tabs */
+  .tabs{display:flex;background:var(--navy2);position:sticky;top:50px;z-index:29}
+  .tabs button{flex:1;background:none;border:none;color:#8a9bb3;padding:11px 4px;font-size:13px;
+    font-weight:700;cursor:pointer;border-bottom:3px solid transparent}
+  .tabs button.on{color:var(--amber);border-bottom-color:var(--amber)}
+
+  /* card */
+  .card{background:var(--paper);margin:12px;border-radius:12px;border:1px solid var(--bd);
+    overflow:hidden;box-shadow:0 1px 3px rgba(20,40,70,.05)}
+  .card h2{margin:0;padding:11px 14px;font-size:13px;font-weight:800;color:#fff;
+    background:var(--ink);display:flex;align-items:center;gap:7px}
+  .card h2 .dot{width:7px;height:7px;border-radius:50%;background:var(--amber)}
+  .card .body{padding:12px 14px}
+
+  /* fields */
+  .row{margin-bottom:11px}
+  .row:last-child{margin-bottom:0}
+  label{display:block;font-size:12px;font-weight:700;color:var(--mut);margin-bottom:5px}
+  input[type=text],input[type=date],textarea,select{width:100%;border:1px solid var(--bd);
+    border-radius:9px;padding:10px 11px;font-size:15px;font-family:inherit;background:#fff;color:var(--txt)}
+  input:focus,textarea:focus,select:focus{outline:none;border-color:var(--amber);box-shadow:0 0 0 3px rgba(245,166,35,.15)}
+  textarea{resize:vertical;min-height:62px;line-height:1.45}
+  .two{display:flex;gap:9px}
+  .two>div{flex:1}
+
+  /* yes/no toggle */
+  .yn{display:inline-flex;border:1px solid var(--bd);border-radius:8px;overflow:hidden}
+  .yn button{border:none;background:#fff;padding:7px 16px;font-size:13px;font-weight:700;color:var(--mut);cursor:pointer}
+  .yn button.on.yes{background:var(--ok);color:#fff}
+  .yn button.on.no{background:var(--warn);color:#fff}
+
+  /* repeatable list */
+  .item{border:1px solid var(--bd);border-radius:10px;padding:10px;margin-bottom:9px;background:var(--soft)}
+  .item .ihead{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px}
+  .item .num{font-weight:800;color:var(--amber-d);font-size:13px}
+  .item .del{background:none;border:none;color:var(--warn);font-size:12px;font-weight:700;cursor:pointer;padding:3px 6px}
+  .addbtn{width:100%;border:1.5px dashed var(--amber);background:rgba(245,166,35,.07);color:var(--amber-d);
+    font-weight:800;padding:10px;border-radius:10px;cursor:pointer;font-size:13px}
+
+  /* checklist */
+  .chk{display:flex;align-items:center;gap:9px;padding:9px 0;border-bottom:1px solid #eef1f5}
+  .chk:last-child{border-bottom:none}
+  .chk .txt{flex:1;font-size:14px}
+  .chk .mark{width:34px;height:34px;border:2px solid var(--bd);border-radius:8px;background:#fff;
+    font-size:18px;font-weight:800;color:var(--mut);cursor:pointer;display:flex;align-items:center;justify-content:center}
+  .chk .mark.ok{border-color:var(--ok);color:var(--ok);background:rgba(31,157,85,.08)}
+  .chk .mark.x{border-color:var(--warn);color:var(--warn);background:rgba(226,59,59,.08)}
+
+  /* worker / signature */
+  .worker{border:1px solid var(--bd);border-radius:10px;margin-bottom:10px;overflow:hidden;background:#fff}
+  .worker .wtop{display:flex;gap:8px;padding:9px;align-items:center}
+  .worker .wtop input{flex:1}
+  .worker .wsign{padding:0 9px 9px}
+  .sigbox{border:1px dashed var(--bd);border-radius:9px;background:#fcfdfe;position:relative;height:110px;touch-action:none}
+  .sigbox canvas{width:100%;height:100%;display:block;border-radius:9px}
+  .sigbox .ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    color:#b7c0cc;font-size:13px;pointer-events:none}
+  .sigbox.signed .ph{display:none}
+  .sigtools{display:flex;justify-content:space-between;align-items:center;margin-top:5px}
+  .sigtools small{color:var(--mut);font-size:11px}
+  .sigtools button{background:none;border:1px solid var(--bd);border-radius:7px;padding:4px 10px;
+    font-size:12px;color:var(--mut);cursor:pointer;font-weight:700}
+  .wcount{font-size:12px;color:var(--mut);margin-bottom:8px}
+
+  /* bottom bar */
+  .bar{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--bd);
+    padding:10px 12px;display:flex;gap:9px;z-index:40;max-width:760px;margin:0 auto}
+  .bar button{flex:1;border:none;border-radius:11px;padding:13px;font-size:14px;font-weight:800;cursor:pointer}
+  .bar .save{background:var(--navy);color:#fff}
+  .bar .pdf{background:var(--amber);color:#1a1300}
+
+  /* saved list */
+  .saved{padding:4px}
+  .srec{background:#fff;border:1px solid var(--bd);border-radius:11px;padding:12px 13px;margin:10px 12px;
+    display:flex;justify-content:space-between;align-items:center;gap:10px}
+  .srec .meta b{display:block;font-size:14px}
+  .srec .meta span{font-size:12px;color:var(--mut)}
+  .srec .acts{display:flex;gap:6px;flex-shrink:0}
+  .srec .acts button{border:1px solid var(--bd);background:#fff;border-radius:8px;padding:7px 10px;
+    font-size:12px;font-weight:700;cursor:pointer}
+  .srec .acts .load{color:var(--navy);border-color:var(--navy)}
+  .srec .acts .rm{color:var(--warn);border-color:var(--warn)}
+  .empty{text-align:center;color:var(--mut);padding:50px 20px;font-size:14px}
+
+  /* 미리버튼 칩 */
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+  .chip{border:1px solid var(--bd);background:#fff;color:var(--txt);border-radius:16px;
+    padding:6px 11px;font-size:12px;cursor:pointer;line-height:1.3;text-align:left}
+  .chip:active{background:rgba(245,166,35,.15)}
+  .chip.amber{border-color:var(--amber);background:rgba(245,166,35,.08);color:var(--amber-d);font-weight:700}
+  .chiplabel{font-size:11px;font-weight:700;color:var(--mut);margin:2px 0 5px}
+  .chipwrap{background:var(--soft);border:1px solid var(--bd);border-radius:9px;padding:9px;margin-bottom:9px}
+
+  /* 장비 선택 */
+  .eqgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(95px,1fr));gap:8px;margin-bottom:4px}
+  .eqbtn{border:1px solid var(--bd);background:#fff;border-radius:10px;padding:12px 6px;font-size:13px;
+    font-weight:700;color:var(--txt);cursor:pointer;text-align:center}
+  .eqbtn.on{border-color:var(--amber);background:var(--amber);color:#1a1300}
+  .eqtype{font-size:11px;color:var(--mut);font-weight:400;display:block;margin-top:2px}
+
+  .hide{display:none!important}
+  .toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;
+    padding:11px 20px;border-radius:30px;font-size:13px;font-weight:700;z-index:60;opacity:0;
+    transition:opacity .25s;pointer-events:none;box-shadow:0 6px 20px rgba(0,0,0,.3)}
+  .toast.show{opacity:1}
+  .hint{font-size:11px;color:var(--mut);margin-top:4px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="badge">TBM</span>
+    <h1>안전점검 회의록<br><span class="sub">Tool Box Meeting · 50억 미만 현장</span></h1>
+  </header>
+
+  <div class="tabs">
+    <button id="tabWrite" class="on" onclick="showTab('write')">TBM 작성</button>
+    <button id="tabEquip" onclick="showTab('equip')">장비 계획서</button>
+    <button id="tabSaved" onclick="showTab('saved')">저장목록</button>
+  </div>
+
+  <!-- ================= 작성 ================= -->
+  <div id="viewWrite">
+
+    <!-- 기본정보 -->
+    <div class="card">
+      <h2><span class="dot"></span>현장 기본정보</h2>
+      <div class="body">
+        <div class="row"><label>현장명 / 공사명</label><input type="text" id="site" placeholder="예) 와동 685-3 다세대주택 신축공사"></div>
+        <div class="two">
+          <div class="row"><label>업체명</label><input type="text" id="company" placeholder="예) 이오스종합건설(주)"></div>
+          <div class="row"><label>TBM 일자</label><input type="date" id="date"></div>
+        </div>
+        <div class="two">
+          <div class="row"><label>관리감독자(담당)</label><input type="text" id="mgr" placeholder="성명"></div>
+          <div class="row"><label>안전보건총괄책임자(확인)</label><input type="text" id="chief" placeholder="성명"></div>
+        </div>
+        <div class="two">
+          <div class="row"><label>날씨 / 기온</label><input type="text" id="weather" placeholder="예) 맑음 4~15도"></div>
+          <div class="row"><label>TBM 장소</label><input type="text" id="place" placeholder="예) 현장 내 평지"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 작업내용 -->
+    <div class="card">
+      <h2><span class="dot"></span>작업 내용</h2>
+      <div class="body">
+        <div class="row"><label>작업명</label><input type="text" id="workname" placeholder="예) 철근 콘크리트 구조물공사"></div>
+        <div class="row"><label>작업내용 (상세)</label><textarea id="workdesc" placeholder="예) 지하층 램프 슬라브 거푸집 설치작업, 합벽지지대 설치, 기둥 철근배근"></textarea></div>
+        <div class="row">
+          <label>위험성평가 실시여부</label>
+          <div class="yn" data-yn="riskAssess">
+            <button type="button" class="yes" onclick="setYN('riskAssess','yes')">예</button>
+            <button type="button" class="no" onclick="setYN('riskAssess','no')">아니오</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 위험요인 / 대책 -->
+    <div class="card">
+      <h2><span class="dot"></span>잠재 위험요인 및 대책</h2>
+      <div class="body">
+        <div class="chipwrap">
+          <div class="chiplabel">⚡ 자주 쓰는 위험요인 — 누르면 새 칸에 추가됩니다</div>
+          <div class="chips" id="hazChips"></div>
+          <div class="chiplabel" style="margin-top:6px">⚡ 자주 쓰는 대책 — 마지막 칸의 대책에 채워집니다</div>
+          <div class="chips" id="meaChips"></div>
+        </div>
+        <div id="hazards"></div>
+        <button class="addbtn" onclick="addHazard()">＋ 위험요인 직접 추가</button>
+        <div class="hint">대책 작성순서: 제거 → 대체 → 통제</div>
+      </div>
+    </div>
+
+    <!-- 중점위험 -->
+    <div class="card">
+      <h2><span class="dot"></span>중점 위험요인 선정</h2>
+      <div class="body">
+        <div class="chipwrap">
+          <div class="chiplabel">⚡ 중점 위험요인 — 누르면 아래 칸에 채워집니다</div>
+          <div class="chips" id="keyHazChips"></div>
+          <div class="chiplabel" style="margin-top:6px">⚡ 중점 대책</div>
+          <div class="chips" id="keyMeaChips"></div>
+        </div>
+        <div class="row"><label>중점 위험요인</label><textarea id="keyHazard" placeholder="예) 고소작업(시스템/BT/말비계)자 추락위험"></textarea></div>
+        <div class="row"><label>중점 대책</label><textarea id="keyMeasure" placeholder="설치기준 준수, 안전벨트 체결 등"></textarea></div>
+        <div class="row"><label>TBM 리더 (소속 / 직책 / 성명)</label><input type="text" id="leader" placeholder="예) 거림건설(철콘) / 관리감독자 / 신용순"></div>
+      </div>
+    </div>
+
+    <!-- 작업 전 안전조치 확인 -->
+    <div class="card">
+      <h2><span class="dot"></span>작업 전 안전조치 확인</h2>
+      <div class="body" id="precheck"></div>
+    </div>
+
+    <!-- 일일 안전점검 -->
+    <div class="card">
+      <h2><span class="dot"></span>일일 안전점검 결과</h2>
+      <div class="body" id="dailycheck"></div>
+    </div>
+
+    <!-- 작업 후 종료미팅 -->
+    <div class="card">
+      <h2><span class="dot"></span>작업 후 종료 미팅</h2>
+      <div class="body">
+        <div class="row"><textarea id="closing" placeholder="예) 고소(2m이상)작업 근로자 안전벨트 체결, 안전난간대·작업발판 임의해체 금지, 정리정돈 안전통로 확보"></textarea></div>
+      </div>
+    </div>
+
+    <!-- 참석자 서명 -->
+    <div class="card">
+      <h2><span class="dot"></span>참석자 명단 및 서명</h2>
+      <div class="body">
+        <div class="wcount" id="wcount">참석 0명</div>
+        <div id="workers"></div>
+        <button class="addbtn" onclick="addWorker()">＋ 참석자 추가</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ================= 장비 계획서 ================= -->
+  <div id="viewEquip" class="hide">
+    <div class="card">
+      <h2><span class="dot"></span>장비 선택</h2>
+      <div class="body">
+        <div class="chiplabel">계획서를 작성할 장비를 누르세요</div>
+        <div class="eqgrid" id="eqGrid"></div>
+      </div>
+    </div>
+
+    <div id="eqForm" class="hide">
+      <div class="card">
+        <h2><span class="dot"></span><span id="eqTitle">작업개요</span></h2>
+        <div class="body">
+          <div class="row"><label>작업명</label><input type="text" id="eq_workname" placeholder="예) 우수관로 굴착 / 인양"></div>
+          <div class="two">
+            <div class="row"><label>작업기간</label><input type="text" id="eq_period" placeholder="00.00.00 ~ 00.00.00"></div>
+            <div class="row"><label>작업업체</label><input type="text" id="eq_vendor" placeholder="○○토건"></div>
+          </div>
+          <div class="row"><label>작업장소</label><input type="text" id="eq_place" placeholder="○○동 △△앞"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2><span class="dot"></span>운전원 · 유도자 · 작업지휘자</h2>
+        <div class="body">
+          <div class="two">
+            <div class="row"><label>운전원 성명</label><input type="text" id="eq_driver" placeholder="성명"></div>
+            <div class="row"><label>운전원 소속</label><input type="text" id="eq_driverOrg" placeholder="소속"></div>
+          </div>
+          <div class="row"><label>면허 / 자격</label><input type="text" id="eq_license" placeholder="예) 건설기계조종사면허(굴착기)"></div>
+          <div class="two">
+            <div class="row"><label>유도자 성명</label><input type="text" id="eq_guide" placeholder="성명"></div>
+            <div class="row"><label>신호방법</label><input type="text" id="eq_signal" placeholder="예) 수신호"></div>
+          </div>
+          <div class="row"><label>작업지휘자 성명</label><input type="text" id="eq_super" placeholder="성명"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2><span class="dot"></span>장비 제원</h2>
+        <div class="body">
+          <div class="two">
+            <div class="row"><label>장비명(모델)</label><input type="text" id="eq_model" placeholder="예) 굴착기(CAT-000)"></div>
+            <div class="row"><label>등록번호</label><input type="text" id="eq_regno" placeholder="부산 02가 ○○○○"></div>
+          </div>
+          <div class="two">
+            <div class="row"><label>정격하중</label><input type="text" id="eq_load" placeholder="00 ton"></div>
+            <div class="row"><label>검사 유효기간</label><input type="text" id="eq_inspect" placeholder="00.00.00 까지"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2><span class="dot"></span>사전 조사 (지형·지반·지장물)</h2>
+        <div class="body">
+          <div class="row"><label>지하매설물 (가스·통신·전기·상하수도)</label><textarea id="eq_buried" placeholder="확인결과 및 조치내용 기재"></textarea></div>
+          <div class="row"><label>지반 상태 / 보강방법</label><textarea id="eq_ground" placeholder="예) 견고 / 철판설치"></textarea></div>
+          <div class="row"><label>출입금지·간섭 조치</label><textarea id="eq_access" placeholder="예) 유도자, 접근방지로프, 칼라콘"></textarea></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2><span class="dot"></span>재해유형별 안전조치</h2>
+        <div class="body">
+          <div class="chipwrap">
+            <div class="chiplabel">⚡ 표준 위험요인 — 누르면 아래에 추가됩니다 (위험요인 + 안전조치 한쌍)</div>
+            <div class="chips" id="eqHazChips"></div>
+          </div>
+          <div id="eqHazards"></div>
+          <button class="addbtn" onclick="addEqHazard()">＋ 직접 추가</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2><span class="dot"></span>운행경로 / 작업방법</h2>
+        <div class="body">
+          <div class="row"><textarea id="eq_method" placeholder="운행경로 및 작업방법 기재 (도면은 출력 후 첨부)"></textarea></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 저장목록 ================= -->
+  <div id="viewSaved" class="hide">
+    <div class="saved" id="savedList"></div>
+  </div>
+</div>
+
+<!-- bottom bar -->
+<div class="bar" id="bottomBar">
+  <button class="save" onclick="saveRecord()">저장하기</button>
+  <button class="pdf" onclick="exportPDF()">PDF 공유</button>
+</div>
+<div class="bar hide" id="equipBar">
+  <button class="pdf" onclick="exportEquipPDF()">작업계획서 PDF</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const DATA = {"tbmHazards": ["시스템비계 상부 근로자 추락 및 낙하물에 의한 하부 근로자 맞음", "크레인 사용 작업 중 낙하물에 의한 근로자 맞음", "BT·말비계 상부 근로자 추락위험", "고소작업(2m이상) 중 근로자 추락", "개구부·단부에서 근로자 추락", "전동공구(그라인더·절단기·원형톱) 사용 중 베임·끼임", "중량물 취급 중 발등·허리 부상", "노출 철근에 찔림·걸려 넘어짐", "거푸집·동바리 붕괴", "감전(가설전선·충전부 접촉)", "밀폐공간 질식·유해가스 중독", "화기작업 중 화재·폭발", "굴착사면 붕괴·매몰", "차량·건설기계와 작업자 충돌", "정리정돈 불량으로 전도·넘어짐"], "tbmMeasures": ["안전난간 등 시설물 해체금지, 안전벨트 체결, 작업발판 위 낙하물 적재 금지", "양중 시 안전기준 준수(2줄걸이·수평유지·정격하중·유도로프·훅해지장치·유도자 배치·통제구역 설정)", "비계 설치기준(아웃트리거·안전난간대·작업발판·벌어짐방지 와이어) 준수", "고소작업 시 안전벨트 체결, 안전난간·작업발판 임의해체 금지", "개구부 덮개·단부 안전난간 설치 및 경고표지 부착", "방호장치 설치, 유경험자 배치, 보호장갑 착용", "적정량 운반 및 바른 자세 유지, 2인1조 작업", "노출 철근 방호캡 설치 및 경고표지 부착", "거푸집·동바리 설치기준 준수, 검측 후 타설", "가설전선 피복 점검, 누전차단기 설치, 충전부 이격거리 확보", "작업 전 가스농도 측정, 환기 실시, 감시인 배치", "소화기 비치, 불티비산방지포 설치, 화기감시자 배치", "굴착면 기울기 준수, 흙막이 설치, 출입금지 조치", "작업구간 출입금지 및 유도자 배치, 신호수 운영", "작업통로 확보 및 자재 정리정돈"], "equipment": {"굴착기": {"type": "차량계 건설기계 / 중량물 취급", "items": [["버킷·압쇄기 등 작업장치에 맞음", "안전핀 등 잠금장치 점검·확인"], ["후진하는 굴착기에 부딪힘", "후사경·후방영상장치 점검·확인"], ["선회하는 붐·버킷에 부딪힘", "선회반경 내 출입금지 조치(또는 유도자 배치)"], ["구조물과 굴착기 사이에 작업자 끼임", "출입금지 조치 또는 유도자 배치"], ["넘어진 굴착기에 운전원 깔림", "좌석 안전띠 착용 철저"], ["넘어진 굴착기에 작업자 깔림", "연약지반 보강 및 도로폭 유지, 급출발·정지·선회 지양"], ["굴착면 붕괴로 매몰", "굴착면 기울기 준수"], ["버킷에 탑승한 작업자 떨어짐", "승차석 외 탑승 금지, 전용 장비 사용"], ["인양 중 중량물이 떨어져 맞음", "인양능력표 준수, 줄걸이 점검, 훅해지장치 확인, 출입금지"]]}, "트럭": {"type": "차량계 건설기계", "items": [["후진하는 트럭에 작업자 부딪힘", "작업 전 후방카메라·후사경 확인, 출입금지 및 유도자 배치"], ["경사면 주차 트럭이 움직여 운전원 부딪힘", "주정차 시 시동·브레이크 확인, 경사면 고임목 사용"], ["갓길 경사면으로 굴러떨어져 운전원 깔림", "도로폭 유지·다이크 설치 등 지반보강, 좌석안전띠 착용"], ["적재함 토사·자재가 떨어져 하부 작업자 맞음", "제원 준수 적재, 운반 중 적재함 덮개 설치"], ["적재함 위 작업 중 작업자 떨어짐", "적재함 위 작업 금지(크레인·지게차 사용), 불가피 시 안전대 체결"], ["적재함 급강하로 하부 점검자 끼임", "작업지휘자 지정, 안전블록 사용"]]}, "고소작업대": {"type": "고소작업", "items": [["작업자가 균형을 잃고 떨어짐", "안전대·안전모 착용, 적정 조도 유지"], ["건물로 이동 중 떨어짐", "상승 상태에서 작업대 이탈 금지, 안전대 착용"], ["허용반경 초과로 붐 파단 추락", "모멘트 감지장치 설치 및 작업반경 준수, 용접부 점검"], ["경사면 설치 작업대가 넘어져 깔림", "평평한 바닥에만 사용, 아웃트리거·브레이크 설치"], ["작업대 이동 중 작업자 떨어짐", "작업자 탑승 중 이동금지"], ["작업대와 보 사이에 끼임", "과상승방지장치 사용 및 임의해제 금지"], ["충전전로 인근 작업 중 감전", "절연보호구 착용, 충전부 이격거리 확보"]]}, "이동식크레인": {"type": "중량물 인양", "items": [["고소작업자가 인양 중량물에 맞고 떨어짐", "고소작업자 안전조치(안전난간·방호망·안전대)"], ["중량물과 탑승한 작업자가 떨어짐", "인양함 등에 작업자 탑승 금지"], ["인양 중량물이 떨어져 하부 작업자 맞음", "2줄걸이·훅해지장치 사용, 정격하중 준수, 하부 출입금지"], ["크레인 전복으로 주변 작업자 깔림", "평평한 곳 설치, 아웃트리거 설치·지반 확인, 정격하중 준수"], ["선회부·붐 파단으로 크레인 넘어짐", "선회부 볼트 체결 확인, 용접부 비파괴검사"], ["고소작업 용도 사용 중 작업자 떨어짐", "곤란한 경우에만 탑승설비 설치 후 사용"]]}, "콘크리트펌프카": {"type": "차량계 건설기계", "items": [["요동치는 선단호스에 근로자 맞음", "건설기계 등록증 확인, 작업 전 선단호스 연결상태 확인"], ["호스 잡던 근로자가 단부에서 떨어짐", "추락위험장소 안전조치(안전난간·방호망·안전대)"], ["파손되어 떨어진 붐대에 맞음", "최대경사각·압송압력 등 제조사 안전기준 준수"], ["아웃트리거 파단으로 펌프카에 깔림", "제조사 매뉴얼에 따른 아웃트리거 설치방법 준수"], ["지반 침하로 넘어지는 펌프카에 깔림", "지형·지반 사전 확인, 연약지반 하부 철판 보강"]]}, "콘크리트믹서트럭": {"type": "차량계 건설기계", "items": [["후진·전후진하는 트럭에 작업자 부딪힘", "후방카메라·후사경 확인, 출입금지·유도자 배치, 스토퍼 설치"], ["경사면 주차 트럭 움직여 운전원 깔림", "주정차 시 시동·브레이크 확인, 고임목 사용"], ["타설 중 콘크리트가 떨어져 하부 작업자 맞음", "제원 준수 타설, 타설 중 보호구 착용"], ["드럼·호퍼 위 작업 중 떨어짐", "구체방수제 제조사 투입, 불가피 시 안전대 체결"], ["슈트 해체 시 손가락 베임·끼임", "보호장갑 착용, 슈트 연결·해체부 안전블럭 설치"]]}, "로더": {"type": "차량계 건설기계", "items": [["작업 중인 로더 버킷에 맞음", "작업구간 출입금지 및 유도자 배치"], ["벌목된 나무가 운전석으로 떨어져 맞음", "견고한 낙하물 보호구조 설치, 작업계획 준수"], ["버킷 토사 제거 중 로더에 부딪힘", "출입금지·유도자 배치, 후사경·후방영상장치 점검"], ["후진하는 로더에 부딪힘", "출입금지·유도자 배치, 후사경·후방영상장치 점검"], ["포크에 탑승한 작업자 떨어짐", "전용 장비 사용, 승차석 외 탑승 금지"], ["과적으로 넘어진 로더에 운전원 깔림", "좌석안전띠 착용, 연약지반 보강·도로폭 유지"]]}, "롤러": {"type": "차량계 건설기계", "items": [["급속 전진하는 롤러 드럼에 작업자 깔림", "출입금지·유도자 배치, 운전석 이탈 시 브레이크 조치"], ["후진하는 롤러에 작업자 부딪힘", "후방카메라·후사경 확인, 출입금지·유도자 배치"], ["정차 롤러가 움직여 인근 작업자 부딪힘", "주정차 시 시동·브레이크 확인, 경사면 고임목 사용"], ["롤러와 상부 지장물 사이에 작업자 끼임", "주변 지장물 간섭여부 확인, 후방확인·유도자 배치"], ["지반 불안정으로 단부 아래 떨어짐", "지형·지반 상태 확인, 갓길 붕괴방지 등 전도방지"]]}, "항타기": {"type": "차량계 건설기계", "items": [["부속품(해머 등)이 떨어져 맞음", "등록증 확인, 전용 부속품 사용, 변형 훅·샤클 사용금지, 전용 클램프 고정"], ["인양 중 파일(말뚝)이 떨어져 맞음", "본체·부속장치 손상 여부 확인, 권상 시 점검"], ["오거 인발 중 흙·자갈 부속물에 맞음", "작업반경 하부 출입금지"], ["리더 상부 작업자가 떨어짐", "리더 상부 작업 시 안전대 착용 등 추락방지"], ["지반 침하로 넘어진 항타기에 깔림", "지형·지반 확인, 연약지반 하부 철판보강, 인근 출입금지"]]}, "지게차": {"type": "차량계 하역운반기계", "items": [["후진하는 지게차에 부딪힘", "출입금지·유도자 배치, 후진경보기·후방감지기 점검"], ["좁은 경사로 후진 중 전복되어 깔림", "좌석안전띠 착용, 안전한 통로 확보"], ["지반 침하로 경사면 굴러떨어짐", "좌석안전띠 착용, 갓길붕괴방지·도로폭 유지"], ["상하차 중 넘어지는 지게차에 깔림", "중량물 취급 방법·순서 준수, 상하차장소 출입금지·유도자 배치"], ["포크 탑승 고소작업 중 떨어짐·끼임", "전용 장비 사용, 승차석 외 탑승 금지"], ["포크 슬링벨트 운반 화물이 떨어져 맞음", "중량물 인양 시 양중기 사용, 작업방법·순서 준수"]]}}};
+
+/* ---------- 상태 ---------- */
+let yn = { riskAssess:'' };
+let editingId = null;
+
+const PRECHECK = [
+  '개인보호구 착용 및 건강상태 양호',
+  '안전난간대·개구부덮개 등 안전시설물 이상 무',
+  '작업내용·위험성·안전대책 숙지'
+];
+const DAILYCHECK = [
+  '단부/개구부 안전시설물 설치',
+  '장비사용 구간 통제 및 신호수 배치',
+  '이동통로/안전통로 확보',
+  '개인보호구 및 위험성평가 이행'
+];
+let precheckState = PRECHECK.map(()=> '');
+let dailyState = DAILYCHECK.map(()=> '');
+
+/* ---------- 탭 ---------- */
+function showTab(t){
+  document.getElementById('viewWrite').classList.toggle('hide', t!=='write');
+  document.getElementById('viewEquip').classList.toggle('hide', t!=='equip');
+  document.getElementById('viewSaved').classList.toggle('hide', t!=='saved');
+  document.getElementById('bottomBar').classList.toggle('hide', t!=='write');
+  document.getElementById('equipBar').classList.toggle('hide', !(t==='equip' && currentEquip));
+  document.getElementById('tabWrite').classList.toggle('on', t==='write');
+  document.getElementById('tabEquip').classList.toggle('on', t==='equip');
+  document.getElementById('tabSaved').classList.toggle('on', t==='saved');
+  if(t==='saved') renderSaved();
+}
+
+/* ---------- 예/아니오 ---------- */
+function setYN(key,val){
+  yn[key]=val;
+  const box=document.querySelector(`[data-yn="${key}"]`);
+  box.querySelectorAll('button').forEach(b=>b.classList.remove('on'));
+  box.querySelector('.'+(val==='yes'?'yes':'no')).classList.add('on');
+}
+
+/* ---------- 위험요인 ---------- */
+let hazardSeq=0;
+function addHazard(haz='',mea=''){
+  hazardSeq++;
+  const id=hazardSeq;
+  const div=document.createElement('div');
+  div.className='item'; div.dataset.id=id;
+  div.innerHTML=`
+    <div class="ihead"><span class="num">위험요인 ${document.querySelectorAll('#hazards .item').length+1}</span>
+      <button class="del" onclick="this.closest('.item').remove();renumberHazards()">삭제</button></div>
+    <div class="row"><label>잠재 위험요인</label><textarea class="hz">${haz}</textarea></div>
+    <div class="row" style="margin-bottom:0"><label>대책</label><textarea class="me">${mea}</textarea></div>`;
+  document.getElementById('hazards').appendChild(div);
+}
+function renumberHazards(){
+  document.querySelectorAll('#hazards .item .num').forEach((n,i)=> n.textContent='위험요인 '+(i+1));
+}
+
+/* ---------- 체크리스트 ---------- */
+function buildChecks(containerId, items, stateArr){
+  const c=document.getElementById(containerId);
+  c.innerHTML='';
+  items.forEach((it,i)=>{
+    const row=document.createElement('div');
+    row.className='chk';
+    row.innerHTML=`<span class="txt">${it}</span>
+      <button class="mark" data-i="${i}">−</button>`;
+    const btn=row.querySelector('.mark');
+    applyMark(btn, stateArr[i]);
+    btn.onclick=()=>{
+      stateArr[i] = stateArr[i]==='O' ? 'X' : stateArr[i]==='X' ? '' : 'O';
+      applyMark(btn, stateArr[i]);
+    };
+    c.appendChild(row);
+  });
+}
+function applyMark(btn,v){
+  btn.classList.remove('ok','x');
+  if(v==='O'){btn.classList.add('ok');btn.textContent='O';}
+  else if(v==='X'){btn.classList.add('x');btn.textContent='X';}
+  else btn.textContent='−';
+}
+
+/* ---------- 참석자 + 손가락 서명 ---------- */
+let workerSeq=0;
+function addWorker(data){
+  workerSeq++;
+  const id=workerSeq;
+  const div=document.createElement('div');
+  div.className='worker'; div.dataset.id=id;
+  div.innerHTML=`
+    <div class="wtop">
+      <input type="text" class="wcompany" placeholder="업체명" value="${data?.company||''}">
+      <input type="text" class="wname" placeholder="성명" value="${data?.name||''}">
+      <button class="del" onclick="this.closest('.worker').remove();updateWCount()">✕</button>
+    </div>
+    <div class="wsign">
+      <div class="sigbox"><canvas></canvas><div class="ph">여기에 손가락으로 서명</div></div>
+      <div class="sigtools"><small>서명</small><button type="button" class="clr">지우기</button></div>
+    </div>`;
+  document.getElementById('workers').appendChild(div);
+  const canvas=div.querySelector('canvas');
+  const sigbox=div.querySelector('.sigbox');
+  initSign(canvas, sigbox, data?.sign);
+  div.querySelector('.clr').onclick=()=>{ clearSign(canvas,sigbox); };
+  updateWCount();
+}
+function updateWCount(){
+  const n=document.querySelectorAll('#workers .worker').length;
+  document.getElementById('wcount').textContent='참석 '+n+'명';
+}
+
+function initSign(canvas, sigbox, dataURL){
+  const ctx=canvas.getContext('2d');
+  function resize(){
+    const r=canvas.getBoundingClientRect();
+    const dpr=window.devicePixelRatio||1;
+    const img=canvas.toDataURL();
+    canvas.width=r.width*dpr; canvas.height=r.height*dpr;
+    ctx.scale(dpr,dpr);
+    ctx.lineWidth=2.2; ctx.lineCap='round'; ctx.lineJoin='round'; ctx.strokeStyle='#15233a';
+  }
+  // initial size
+  setTimeout(()=>{
+    const r=canvas.getBoundingClientRect();
+    const dpr=window.devicePixelRatio||1;
+    canvas.width=r.width*dpr; canvas.height=r.height*dpr;
+    ctx.scale(dpr,dpr);
+    ctx.lineWidth=2.2; ctx.lineCap='round'; ctx.lineJoin='round'; ctx.strokeStyle='#15233a';
+    if(dataURL){ const im=new Image(); im.onload=()=>{ ctx.drawImage(im,0,0,r.width,r.height); sigbox.classList.add('signed'); }; im.src=dataURL; }
+  },30);
+
+  let drawing=false,last=null;
+  function pos(e){
+    const r=canvas.getBoundingClientRect();
+    const p=e.touches?e.touches[0]:e;
+    return {x:p.clientX-r.left, y:p.clientY-r.top};
+  }
+  function start(e){ e.preventDefault(); drawing=true; last=pos(e); sigbox.classList.add('signed'); }
+  function move(e){ if(!drawing)return; e.preventDefault(); const p=pos(e);
+    ctx.beginPath(); ctx.moveTo(last.x,last.y); ctx.lineTo(p.x,p.y); ctx.stroke(); last=p; }
+  function end(){ drawing=false; }
+  canvas.addEventListener('mousedown',start); canvas.addEventListener('mousemove',move);
+  window.addEventListener('mouseup',end);
+  canvas.addEventListener('touchstart',start,{passive:false});
+  canvas.addEventListener('touchmove',move,{passive:false});
+  canvas.addEventListener('touchend',end);
+}
+function clearSign(canvas,sigbox){
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  sigbox.classList.remove('signed');
+}
+
+/* ---------- 데이터 수집 ---------- */
+function collect(){
+  const hazards=[...document.querySelectorAll('#hazards .item')].map(it=>({
+    hazard:it.querySelector('.hz').value, measure:it.querySelector('.me').value }));
+  const workers=[...document.querySelectorAll('#workers .worker')].map(w=>{
+    const cv=w.querySelector('canvas');
+    const signed=w.querySelector('.sigbox').classList.contains('signed');
+    return { company:w.querySelector('.wcompany').value, name:w.querySelector('.wname').value,
+      sign: signed? cv.toDataURL('image/png') : '' };
+  });
+  return {
+    id: editingId || Date.now(),
+    site:val('site'), company:val('company'), date:val('date'),
+    mgr:val('mgr'), chief:val('chief'), weather:val('weather'), place:val('place'),
+    workname:val('workname'), workdesc:val('workdesc'), riskAssess:yn.riskAssess,
+    hazards, keyHazard:val('keyHazard'), keyMeasure:val('keyMeasure'), leader:val('leader'),
+    precheck:[...precheckState], daily:[...dailyState], closing:val('closing'),
+    workers, savedAt:new Date().toISOString()
+  };
+}
+function val(id){return document.getElementById(id).value;}
+
+/* ---------- 저장 (localStorage) ---------- */
+const KEY='tbm_records_v1';
+function getRecords(){ try{return JSON.parse(localStorage.getItem(KEY))||[]}catch(e){return[]} }
+function saveRecords(r){ localStorage.setItem(KEY, JSON.stringify(r)); }
+
+function saveRecord(){
+  if(!val('site') && !val('workname')){ toast('현장명 또는 작업명을 입력하세요'); return; }
+  const rec=collect();
+  let recs=getRecords();
+  const i=recs.findIndex(x=>x.id===rec.id);
+  if(i>=0) recs[i]=rec; else recs.unshift(rec);
+  saveRecords(recs);
+  editingId=rec.id;
+  toast('저장되었습니다');
+}
+
+/* ---------- 불러오기 ---------- */
+function loadRecord(id){
+  const rec=getRecords().find(x=>x.id===id);
+  if(!rec) return;
+  editingId=rec.id;
+  ['site','company','date','mgr','chief','weather','place','workname','workdesc','keyHazard','keyMeasure','leader','closing']
+    .forEach(k=> document.getElementById(k).value=rec[k]||'');
+  if(rec.riskAssess) setYN('riskAssess',rec.riskAssess); else { yn.riskAssess=''; document.querySelectorAll('[data-yn="riskAssess"] button').forEach(b=>b.classList.remove('on')); }
+  document.getElementById('hazards').innerHTML=''; hazardSeq=0;
+  (rec.hazards||[]).forEach(h=>addHazard(h.hazard,h.measure));
+  if(!rec.hazards||!rec.hazards.length) addHazard();
+  precheckState=(rec.precheck&&rec.precheck.length===PRECHECK.length)?[...rec.precheck]:PRECHECK.map(()=> '');
+  dailyState=(rec.daily&&rec.daily.length===DAILYCHECK.length)?[...rec.daily]:DAILYCHECK.map(()=> '');
+  buildChecks('precheck',PRECHECK,precheckState);
+  buildChecks('dailycheck',DAILYCHECK,dailyState);
+  document.getElementById('workers').innerHTML=''; workerSeq=0;
+  (rec.workers||[]).forEach(w=>addWorker(w));
+  updateWCount();
+  showTab('write');
+  window.scrollTo(0,0);
+  toast('불러왔습니다');
+}
+function deleteRecord(id){
+  if(!confirm('이 기록을 삭제할까요?')) return;
+  saveRecords(getRecords().filter(x=>x.id!==id));
+  renderSaved();
+  toast('삭제되었습니다');
+}
+
+/* ---------- 저장목록 렌더 ---------- */
+function renderSaved(){
+  const recs=getRecords();
+  const c=document.getElementById('savedList');
+  if(!recs.length){ c.innerHTML='<div class="empty">저장된 TBM 일지가 없습니다.<br>작성 후 저장하기를 눌러주세요.</div>'; return; }
+  c.innerHTML=recs.map(r=>`
+    <div class="srec">
+      <div class="meta">
+        <b>${esc(r.site||r.workname||'(제목없음)')}</b>
+        <span>${r.date||'-'} · ${esc(r.workname||'')} · 참석 ${(r.workers||[]).length}명</span>
+      </div>
+      <div class="acts">
+        <button class="load" onclick="loadRecord(${r.id})">열기</button>
+        <button class="rm" onclick="deleteRecord(${r.id})">삭제</button>
+      </div>
+    </div>`).join('');
+}
+function esc(s){return (s||'').replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));}
+
+/* ---------- PDF (인쇄 → PDF 저장 / 공유) ---------- */
+function exportPDF(){
+  const r=collect();
+  const ynTxt=v=> v==='yes'?'☑ 예   ☐ 아니오' : v==='no'?'☐ 예   ☑ 아니오' : '☐ 예   ☐ 아니오';
+  const markTxt=v=> v==='O'?'O':v==='X'?'X':'';
+  const hzRows=(r.hazards||[]).map((h,i)=>`<tr><td class="c">${i+1}</td><td>${esc(h.hazard)}</td><td>${esc(h.measure)}</td></tr>`).join('')||'<tr><td colspan="3">-</td></tr>';
+  const preRows=PRECHECK.map((t,i)=>`<tr><td>${t}</td><td class="c">${markTxt(r.precheck[i])}</td></tr>`).join('');
+  const dayRows=DAILYCHECK.map((t,i)=>`<tr><td>${t}</td><td class="c">${markTxt(r.daily[i])}</td></tr>`).join('');
+  const wRows=(r.workers||[]).map((w,i)=>`<tr><td class="c">${i+1}</td><td>${esc(w.company)}</td><td>${esc(w.name)}</td><td class="sig">${w.sign?`<img src="${w.sign}">`:''}</td></tr>`).join('')||'<tr><td colspan="4">-</td></tr>';
+
+  const html=`<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><title>TBM 일지</title>
+  <style>
+   @page{size:A4;margin:12mm}
+   *{font-family:"Malgun Gothic","Apple SD Gothic Neo",sans-serif;box-sizing:border-box}
+   body{margin:0;color:#1a2330;font-size:11px}
+   h1{font-size:17px;text-align:center;margin:0 0 3px;letter-spacing:1px}
+   .sub{text-align:center;color:#666;font-size:10px;margin-bottom:10px}
+   table{width:100%;border-collapse:collapse;margin-bottom:9px}
+   td,th{border:1px solid #444;padding:5px 7px;vertical-align:top}
+   th{background:#1a2330;color:#fff;font-size:11px;text-align:left}
+   .lbl{background:#eef1f5;font-weight:700;width:120px;white-space:nowrap}
+   .c{text-align:center}
+   .sec{background:#0f1b2d;color:#fff;font-weight:700;padding:5px 8px;font-size:12px;margin:11px 0 5px;border-radius:3px}
+   .sig img{height:30px}
+   td.sig{height:38px;width:120px}
+   tr{page-break-inside:avoid}
+  </style></head><body>
+   <h1>안전점검 회의록 (T.B.M)</h1>
+   <div class="sub">Tool Box Meeting · 50억 미만 현장</div>
+
+   <table>
+    <tr><td class="lbl">현장/공사명</td><td colspan="3">${esc(r.site)}</td></tr>
+    <tr><td class="lbl">업체명</td><td>${esc(r.company)}</td><td class="lbl">TBM 일자</td><td>${esc(r.date)}</td></tr>
+    <tr><td class="lbl">담당(관리감독자)</td><td>${esc(r.mgr)}</td><td class="lbl">확인(총괄책임자)</td><td>${esc(r.chief)}</td></tr>
+    <tr><td class="lbl">날씨/기온</td><td>${esc(r.weather)}</td><td class="lbl">TBM 장소</td><td>${esc(r.place)}</td></tr>
+   </table>
+
+   <div class="sec">작업 내용</div>
+   <table>
+    <tr><td class="lbl">작업명</td><td>${esc(r.workname)}</td></tr>
+    <tr><td class="lbl">작업내용</td><td>${esc(r.workdesc)}</td></tr>
+    <tr><td class="lbl">위험성평가 실시</td><td>${ynTxt(r.riskAssess)}</td></tr>
+   </table>
+
+   <div class="sec">잠재 위험요인 및 대책</div>
+   <table>
+    <tr><th style="width:30px" class="c">No</th><th>잠재 위험요인</th><th>대책 (제거→대체→통제)</th></tr>
+    ${hzRows}
+   </table>
+
+   <div class="sec">중점 위험요인</div>
+   <table>
+    <tr><td class="lbl">중점 위험요인</td><td>${esc(r.keyHazard)}</td></tr>
+    <tr><td class="lbl">중점 대책</td><td>${esc(r.keyMeasure)}</td></tr>
+    <tr><td class="lbl">TBM 리더</td><td>${esc(r.leader)}</td></tr>
+   </table>
+
+   <div class="sec">작업 전 안전조치 확인  (O 적합 / X 부적합)</div>
+   <table>${preRows}</table>
+
+   <div class="sec">일일 안전점검 결과</div>
+   <table>${dayRows}</table>
+
+   <div class="sec">작업 후 종료 미팅</div>
+   <table><tr><td>${esc(r.closing)}</td></tr></table>
+
+   <div class="sec">참석자 명단 및 서명 (총 ${(r.workers||[]).length}명)</div>
+   <table>
+    <tr><th style="width:30px" class="c">No</th><th>업체명</th><th>성명</th><th style="width:120px">서명</th></tr>
+    ${wRows}
+   </table>
+  </body></html>`;
+
+  const w=window.open('','_blank');
+  if(!w){ toast('팝업을 허용해주세요'); return; }
+  w.document.write(html); w.document.close();
+  setTimeout(()=>{ w.focus(); w.print(); }, 400);
+}
+
+/* ---------- toast ---------- */
+let toastT;
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),1800);
+}
+
+/* ---------- 미리버튼 칩 (TBM) ---------- */
+function buildChip(text, onclick, amber){
+  const b=document.createElement('button');
+  b.className='chip'+(amber?' amber':''); b.type='button';
+  b.textContent=text; b.onclick=onclick;
+  return b;
+}
+function buildTbmChips(){
+  const hz=document.getElementById('hazChips');
+  DATA.tbmHazards.forEach(t=> hz.appendChild(buildChip(t, ()=>{
+    addHazard(t,''); toast('위험요인 추가됨'); window.scrollBy(0,80);
+  })));
+  const me=document.getElementById('meaChips');
+  DATA.tbmMeasures.forEach(t=> me.appendChild(buildChip(t, ()=>{
+    const items=document.querySelectorAll('#hazards .item');
+    if(!items.length){ addHazard('',t); }
+    else { const ta=items[items.length-1].querySelector('.me');
+      ta.value = ta.value ? ta.value+'\n'+t : t; }
+    toast('대책 채워짐');
+  })));
+  // 중점위험
+  const kh=document.getElementById('keyHazChips');
+  DATA.tbmHazards.forEach(t=> kh.appendChild(buildChip(t, ()=>{
+    const el=document.getElementById('keyHazard'); el.value = el.value? el.value+'\n'+t : t;
+  })));
+  const km=document.getElementById('keyMeaChips');
+  DATA.tbmMeasures.forEach(t=> km.appendChild(buildChip(t, ()=>{
+    const el=document.getElementById('keyMeasure'); el.value = el.value? el.value+'\n'+t : t;
+  })));
+}
+
+/* ---------- 장비 계획서 ---------- */
+let currentEquip=null;
+function buildEquipGrid(){
+  const g=document.getElementById('eqGrid');
+  Object.keys(DATA.equipment).forEach(name=>{
+    const b=document.createElement('button');
+    b.className='eqbtn'; b.dataset.name=name;
+    b.innerHTML=name+'<span class="eqtype">'+DATA.equipment[name].type+'</span>';
+    b.onclick=()=>selectEquip(name);
+    g.appendChild(b);
+  });
+}
+function selectEquip(name){
+  currentEquip=name;
+  document.querySelectorAll('#eqGrid .eqbtn').forEach(b=> b.classList.toggle('on', b.dataset.name===name));
+  document.getElementById('eqTitle').textContent=name+' — 작업개요';
+  document.getElementById('eqForm').classList.remove('hide');
+  document.getElementById('equipBar').classList.remove('hide');
+  // 칩 다시 그림
+  const c=document.getElementById('eqHazChips'); c.innerHTML='';
+  DATA.equipment[name].items.forEach(pair=>{
+    c.appendChild(buildChip(pair[0], ()=>{ addEqHazard(pair[0],pair[1]); toast('추가됨'); window.scrollBy(0,80); }));
+  });
+  document.getElementById('eqHazards').innerHTML='';
+  window.scrollTo({top:document.getElementById('eqForm').offsetTop-60, behavior:'smooth'});
+}
+let eqHazSeq=0;
+function addEqHazard(haz='',mea=''){
+  eqHazSeq++;
+  const div=document.createElement('div');
+  div.className='item';
+  div.innerHTML=`
+    <div class="ihead"><span class="num">항목</span>
+      <button class="del" onclick="this.closest('.item').remove()">삭제</button></div>
+    <div class="row"><label>위험요인(발생형태)</label><textarea class="ehz">${haz}</textarea></div>
+    <div class="row" style="margin-bottom:0"><label>안전조치</label><textarea class="eme">${mea}</textarea></div>`;
+  document.getElementById('eqHazards').appendChild(div);
+}
+
+function exportEquipPDF(){
+  if(!currentEquip){ toast('장비를 먼저 선택하세요'); return; }
+  const v=id=>document.getElementById(id).value;
+  const haz=[...document.querySelectorAll('#eqHazards .item')].map(it=>({
+    h:it.querySelector('.ehz').value, m:it.querySelector('.eme').value }));
+  const rows=haz.map((x,i)=>`<tr><td class="c">${i+1}</td><td>${esc(x.h)}</td><td>${esc(x.m)}</td></tr>`).join('')||'<tr><td colspan="3">-</td></tr>';
+  const html=`<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><title>${currentEquip} 작업계획서</title>
+  <style>@page{size:A4;margin:12mm}*{font-family:"Malgun Gothic","Apple SD Gothic Neo",sans-serif;box-sizing:border-box}
+   body{margin:0;color:#1a2330;font-size:11px}h1{font-size:17px;text-align:center;margin:0 0 3px}
+   .sub{text-align:center;color:#666;font-size:10px;margin-bottom:10px}
+   table{width:100%;border-collapse:collapse;margin-bottom:9px}td,th{border:1px solid #444;padding:5px 7px;vertical-align:top}
+   th{background:#1a2330;color:#fff;text-align:left}.lbl{background:#eef1f5;font-weight:700;width:120px;white-space:nowrap}
+   .c{text-align:center}.sec{background:#0f1b2d;color:#fff;font-weight:700;padding:5px 8px;font-size:12px;margin:11px 0 5px;border-radius:3px}
+   tr{page-break-inside:avoid}</style></head><body>
+   <h1>${currentEquip} 작업계획서</h1><div class="sub">${DATA.equipment[currentEquip].type} · 고용노동부 표준서식 참고</div>
+   <div class="sec">1. 작업개요</div>
+   <table><tr><td class="lbl">작업명</td><td>${esc(v('eq_workname'))}</td><td class="lbl">작업기간</td><td>${esc(v('eq_period'))}</td></tr>
+   <tr><td class="lbl">작업업체</td><td>${esc(v('eq_vendor'))}</td><td class="lbl">작업장소</td><td>${esc(v('eq_place'))}</td></tr></table>
+   <div class="sec">2. 운전원·유도자·작업지휘자</div>
+   <table><tr><td class="lbl">운전원</td><td>${esc(v('eq_driver'))} / ${esc(v('eq_driverOrg'))}</td><td class="lbl">면허·자격</td><td>${esc(v('eq_license'))}</td></tr>
+   <tr><td class="lbl">유도자</td><td>${esc(v('eq_guide'))}</td><td class="lbl">신호방법</td><td>${esc(v('eq_signal'))}</td></tr>
+   <tr><td class="lbl">작업지휘자</td><td colspan="3">${esc(v('eq_super'))}</td></tr></table>
+   <div class="sec">3. 장비 제원</div>
+   <table><tr><td class="lbl">장비명(모델)</td><td>${esc(v('eq_model'))}</td><td class="lbl">등록번호</td><td>${esc(v('eq_regno'))}</td></tr>
+   <tr><td class="lbl">정격하중</td><td>${esc(v('eq_load'))}</td><td class="lbl">검사 유효기간</td><td>${esc(v('eq_inspect'))}</td></tr></table>
+   <div class="sec">4. 사전 조사 (지형·지반·지장물)</div>
+   <table><tr><td class="lbl">지하매설물</td><td>${esc(v('eq_buried'))}</td></tr>
+   <tr><td class="lbl">지반·보강</td><td>${esc(v('eq_ground'))}</td></tr>
+   <tr><td class="lbl">출입금지·간섭</td><td>${esc(v('eq_access'))}</td></tr></table>
+   <div class="sec">5. 재해유형별 안전조치</div>
+   <table><tr><th style="width:30px" class="c">No</th><th>위험요인(발생형태)</th><th>안전조치</th></tr>${rows}</table>
+   <div class="sec">6. 운행경로 / 작업방법</div>
+   <table><tr><td>${esc(v('eq_method'))}</td></tr></table>
+   </body></html>`;
+  const w=window.open('','_blank');
+  if(!w){ toast('팝업을 허용해주세요'); return; }
+  w.document.write(html); w.document.close();
+  setTimeout(()=>{ w.focus(); w.print(); },400);
+}
+
+/* ---------- 초기화 ---------- */
+function init(){
+  document.getElementById('date').value=new Date().toISOString().slice(0,10);
+  addHazard('','');
+  buildChecks('precheck',PRECHECK,precheckState);
+  buildChecks('dailycheck',DAILYCHECK,dailyState);
+  addWorker();
+  buildTbmChips();
+  buildEquipGrid();
+}
+init();
+</script>
+</body>
+</html>
